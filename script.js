@@ -1087,6 +1087,9 @@ function navigateTo(route, updateHistory = true) {
 
     currentRoute = route;
 
+    // Close mobile drawer when view changes
+    closeMobileSidebar();
+
     if (updateHistory) {
         if (window.location.hash !== "#/" + route) {
             window.location.hash = "#/" + route;
@@ -1254,6 +1257,40 @@ function setActiveButton(route) {
 }
 
 /**
+ * Mobile Navigation Drawer Controls
+ */
+function openMobileSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    const menuBtn = document.getElementById("mobileMenuBtn");
+
+    if (sidebar) sidebar.classList.add("open");
+    if (overlay) overlay.classList.add("active");
+    if (menuBtn) menuBtn.setAttribute("aria-expanded", "true");
+    document.body.classList.add("sidebar-open");
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    const menuBtn = document.getElementById("mobileMenuBtn");
+
+    if (sidebar) sidebar.classList.remove("open");
+    if (overlay) overlay.classList.remove("active");
+    if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("sidebar-open");
+}
+
+function toggleMobileSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    if (sidebar && sidebar.classList.contains("open")) {
+        closeMobileSidebar();
+    } else {
+        openMobileSidebar();
+    }
+}
+
+/**
  * Setup navigation click listeners for sidebar & mobile nav
  */
 function setupNavigationListeners() {
@@ -1265,6 +1302,20 @@ function setupNavigationListeners() {
                 navigateTo(route, true);
             }
         });
+    });
+
+    // Close mobile drawer on Escape key
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeMobileSidebar();
+        }
+    });
+
+    // Close mobile drawer if resized past 900px
+    window.addEventListener("resize", () => {
+        if (window.innerWidth > 900) {
+            closeMobileSidebar();
+        }
     });
 }
 
