@@ -534,36 +534,83 @@
             <!-- ================= VIEW 6: STATISTICS ================= -->
             <div class="view-page" id="view-statistics" style="display: none;">
 
-                <!-- Statistics Overview Grid -->
-                <section class="statistics-section" id="statisticsSection">
+                <!-- Task Statistics Graphs Section -->
+                <section class="charts-section" id="taskChartsSection">
                     <div class="section-heading">
                         <div>
-                            <h2>Productivity Summary</h2>
-                            <p>Overview of total, completed, pending, and overdue tasks.</p>
+                            <h2>Task Statistics & Analytics</h2>
+                            <p>Visual breakdown of your task distribution, completion rates, and status.</p>
                         </div>
                     </div>
 
-                    <div class="statistics-grid">
-                        <div class="statistics-card" onclick="navigateTo('tasks')" style="cursor: pointer;" title="View all tasks">
-                            <p>Total Tasks</p>
-                            <h2 id="statsTotal">0</h2>
+                    <!-- Chart Cards Grid -->
+                    <div class="charts-grid" id="chartsGrid">
+
+                        <!-- Chart Card 1: Status Distribution (Doughnut) -->
+                        <div class="chart-card">
+                            <div class="chart-card-header">
+                                <div>
+                                    <h3>Task Distribution</h3>
+                                    <p class="chart-subtitle">Proportion of completed, pending, and overdue tasks</p>
+                                </div>
+                                <span class="chart-badge" id="chartTotalBadge">0 Tasks</span>
+                            </div>
+
+                            <div class="chart-body">
+                                <div class="chart-canvas-wrap doughnut-wrap">
+                                    <canvas id="statusDoughnutChart" aria-label="Task Distribution Doughnut Chart" role="img"></canvas>
+                                </div>
+
+                                <!-- Custom Accessible Legend & Metrics -->
+                                <div class="chart-legend" id="doughnutLegend">
+                                    <div class="legend-item" onclick="navigateTo('completed')" style="cursor: pointer;" title="View Completed Tasks">
+                                        <span class="legend-dot dot-completed"></span>
+                                        <span class="legend-label">Completed</span>
+                                        <strong class="legend-value" id="legendCompletedCount">0 (0%)</strong>
+                                    </div>
+                                    <div class="legend-item" onclick="navigateTo('pending')" style="cursor: pointer;" title="View Pending Tasks">
+                                        <span class="legend-dot dot-pending"></span>
+                                        <span class="legend-label">Pending</span>
+                                        <strong class="legend-value" id="legendPendingCount">0 (0%)</strong>
+                                    </div>
+                                    <div class="legend-item" onclick="navigateTo('overdue')" style="cursor: pointer;" title="View Overdue Tasks">
+                                        <span class="legend-dot dot-overdue"></span>
+                                        <span class="legend-label">Overdue</span>
+                                        <strong class="legend-value" id="legendOverdueCount">0 (0%)</strong>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="statistics-card" onclick="navigateTo('completed')" style="cursor: pointer;" title="View completed tasks">
-                            <p>Completed Tasks</p>
-                            <h2 id="statsCompleted">0</h2>
+                        <!-- Chart Card 2: Status Breakdown (Bar Chart) -->
+                        <div class="chart-card">
+                            <div class="chart-card-header">
+                                <div>
+                                    <h3>Task Status Breakdown</h3>
+                                    <p class="chart-subtitle">Comparison across all task categories and deadlines</p>
+                                </div>
+                                <span class="chart-badge rate-badge" id="chartRateBadge">0% Done</span>
+                            </div>
+
+                            <div class="chart-body">
+                                <div class="chart-canvas-wrap bar-wrap">
+                                    <canvas id="statusBarChart" aria-label="Task Status Bar Chart" role="img"></canvas>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="statistics-card" onclick="navigateTo('pending')" style="cursor: pointer;" title="View pending tasks">
-                            <p>Pending Tasks</p>
-                            <h2 id="statsPending">0</h2>
-                        </div>
-
-                        <div class="statistics-card" onclick="navigateTo('overdue')" style="cursor: pointer;" title="View overdue tasks">
-                            <p>Overdue Tasks</p>
-                            <h2 id="statsOverdue">0</h2>
-                        </div>
                     </div>
+
+                    <!-- Empty State for Charts (Shown when 0 tasks exist) -->
+                    <div class="charts-empty-state" id="chartsEmptyState" style="display: none;">
+                        <div class="empty-icon">📊</div>
+                        <h3>No Task Statistics Available</h3>
+                        <p>Create your academic tasks to see automated visual analytics and graphs.</p>
+                        <button type="button" class="primary-btn" onclick="openTaskForm()" style="margin-top: 14px;">
+                            + Add Your First Task
+                        </button>
+                    </div>
+
                 </section>
 
                 <!-- Statistics Progress Section -->
@@ -788,6 +835,7 @@
 
     </div>
 
+    <script src="chart.min.js"></script>
     <script src="script.js"></script>
 
 </body>

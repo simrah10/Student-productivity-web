@@ -952,35 +952,235 @@ function updateDashboard() {
     if (progressFill) progressFill.style.width = progress + "%";
 }
 
+let statusDoughnutChartInstance = null;
+let statusBarChartInstance = null;
+
+function destroyStatisticsCharts() {
+    if (statusDoughnutChartInstance) {
+        statusDoughnutChartInstance.destroy();
+        statusDoughnutChartInstance = null;
+    }
+    if (statusBarChartInstance) {
+        statusBarChartInstance.destroy();
+        statusBarChartInstance = null;
+    }
+}
+
 /**
- * Update Statistics view figures and progress
+ * Update Statistics view figures, progress bar, and charts
  */
 function updateStatistics() {
     const total = tasks.length;
     const completed = tasks.filter(t => t.completed).length;
-    const pending = tasks.filter(t => !t.completed).length;
     const today = new Date().toISOString().split("T")[0];
-    const overdue = tasks.filter(t => !t.completed && t.dueDate < today).length;
 
-    const statsTotal = document.getElementById("statsTotal");
-    const statsCompleted = document.getElementById("statsCompleted");
-    const statsPending = document.getElementById("statsPending");
-    const statsOverdue = document.getElementById("statsOverdue");
-
-    if (statsTotal) statsTotal.textContent = total;
-    if (statsCompleted) statsCompleted.textContent = completed;
-    if (statsPending) statsPending.textContent = pending;
-    if (statsOverdue) statsOverdue.textContent = overdue;
+    // Mutually exclusive calculation to ensure zero double-counting:
+    // Completed: t.completed === true
+    // Overdue: !t.completed && t.dueDate < today
+    // Pending (active/on-track): !t.completed && (!t.dueDate || t.dueDate >= today)
+    const overdue = tasks.filter(t => !t.completed && t.dueDate && t.dueDate < today).length;
+    const pending = tasks.filter(t => !t.completed && (!t.dueDate || t.dueDate >= today)).length;
 
     let progress = 0;
     if (total > 0) {
         progress = Math.round((completed / total) * 100);
     }
 
+    // Overall Progress Bar in Statistics
     const statsProgressText = document.getElementById("statsProgressText");
     const statsProgressFill = document.getElementById("statsProgressFill");
     if (statsProgressText) statsProgressText.textContent = progress + "%";
     if (statsProgressFill) statsProgressFill.style.width = progress + "%";
+
+    // Chart Badges
+    const chartTotalBadge = document.getElementById("chartTotalBadge");
+    const chartRateBadge = document.getElementById("chartRateBadge");
+    if (chartTotalBadge) chartTotalBadge.textContent = `${total} Task${total === 1 ? "" : "s"}`;
+    if (chartRateBadge) chartRateBadge.textContent = `${progress}% Completed`;
+
+    // Legend Counts and Percentages
+    const completedPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const pendingPct = total > 0 ? Math.round((pending / total) * 100) : 0;
+    const overduePct = total > 0 ? Math.round((overdue / total) * 100) : 0;
+
+    const legendCompleted = document.getElementById("legendCompletedCount");
+    const legendPending = document.getElementById("legendPendingCount");
+    const legendOverdue = document.getElementById("legendOverdueCount");
+
+    if (legendCompleted) legendCompleted.textContent = `${completed} (${completedPct}%)`;
+    if (legendPending) legendPending.textContent = `${pending} (${pendingPct}%)`;
+    if (legendOverdue) legendOverdue.textContent = `${overdue} (${overduePct}%)`;
+
+    // Empty state vs Charts visibility
+    const chartsGrid = document.getElementById("chartsGrid");
+    const chartsEmptyState = document.getElementById("chartsEmptyState");
+    const statsView = document.getElementById("view-statistics");
+    const isStatsVisible = statsView && statsView.style.display !== "none";
+
+    if (total === 0) {
+        if (chartsGrid) chartsGrid.style.display = "none";
+        if (chartsEmptyState) chartsEmptyState.style.display = "block";
+        destroyStatisticsCharts();
+        return;
+    }
+
+    if (chartsEmptyState) chartsEmptyState.style.display = "none";
+    if (chartsGrid) {
+        chartsGrid.style.display = isStatsVisible ? "grid" : "";
+    }
+
+    if (isStatsVisible) {
+        renderStatisticsCharts(total, completed, pending, overdue);
+    }
+}
+
+/**
+ * Render Doughnut and Bar charts with Chart.js (with SVG fallback)
+ */
+function renderStatisticsCharts(total, completed, pending, overdue) {
+    if (typeof Chart === "undefined") {
+        renderFallbackSvgCharts(total, completed, pending, overdue);
+        return;
+    }
+
+    destroyStatisticsCharts();
+
+    // 1. Doughnut Chart: Task Status Distribution
+    const doughnutCanvas = document.getElementById("statusDoughnutChart");
+    if (doughnutCanvas) {
+        const ctx = doughnutCanvas.getContext("2d");
+        statusDoughnutChartInstance = new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: ["Completed", "Pending", "Overdue"],
+                datasets: [{
+                    data: [completed, pending, overdue],
+                    backgroundColor: [
+                        "#10b981", // Green
+                        "#3b82f6", // Blue
+                        "#ef4444"  // Red
+                    ],
+                    borderColor: "#ffffff",
+                    borderWidth: 2,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: "#18202f",
+                        titleFont: { size: 13, family: "Inter, -apple-system, sans-serif" },
+                        bodyFont: { size: 12, family: "Inter, -apple-system, sans-serif" },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const val = context.raw || 0;
+                                const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                                return ` ${context.label}: ${val} (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: "66%"
+            }
+        });
+    }
+
+    // 2. Bar Chart: Task Status Breakdown
+    const barCanvas = document.getElementById("statusBarChart");
+    if (barCanvas) {
+        const ctx = barCanvas.getContext("2d");
+        statusBarChartInstance = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: ["Total Tasks", "Completed", "Pending", "Overdue"],
+                datasets: [{
+                    label: "Count",
+                    data: [total, completed, pending, overdue],
+                    backgroundColor: [
+                        "#18202f", // Brand Navy
+                        "#10b981", // Green
+                        "#3b82f6", // Blue
+                        "#ef4444"  // Red
+                    ],
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    maxBarThickness: 44
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: "#18202f",
+                        titleFont: { size: 13, family: "Inter, -apple-system, sans-serif" },
+                        bodyFont: { size: 12, family: "Inter, -apple-system, sans-serif" },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.label}: ${context.raw} task(s)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0,
+                            color: "#7a8392",
+                            font: { size: 11, family: "Inter, -apple-system, sans-serif" }
+                        },
+                        grid: {
+                            color: "#f1f3f7"
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: "#475569",
+                            font: { size: 12, family: "Inter, -apple-system, sans-serif", weight: 500 }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Fallback SVG renderer if Chart.js is not loaded
+ */
+function renderFallbackSvgCharts(total, completed, pending, overdue) {
+    const doughnutCanvas = document.getElementById("statusDoughnutChart");
+    if (doughnutCanvas && doughnutCanvas.parentElement) {
+        const cPct = total > 0 ? (completed / total) * 100 : 0;
+        const pPct = total > 0 ? (pending / total) * 100 : 0;
+        const oPct = total > 0 ? (overdue / total) * 100 : 0;
+        doughnutCanvas.parentElement.innerHTML = `
+            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; max-height: 220px; display: block; margin: auto;">
+                <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#f1f3f7" stroke-width="4"></circle>
+                <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#10b981" stroke-width="4" stroke-dasharray="${cPct} ${100 - cPct}" stroke-dashoffset="25"></circle>
+                <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#3b82f6" stroke-width="4" stroke-dasharray="${pPct} ${100 - pPct}" stroke-dashoffset="${25 - cPct}"></circle>
+                <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#ef4444" stroke-width="4" stroke-dasharray="${oPct} ${100 - oPct}" stroke-dashoffset="${25 - cPct - pPct}"></circle>
+                <text x="18" y="20.5" font-size="5" text-anchor="middle" font-weight="bold" fill="#18202f">${total}</text>
+            </svg>
+        `;
+    }
 }
 
 /**
