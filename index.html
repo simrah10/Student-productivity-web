@@ -205,11 +205,16 @@
                     <span>📈</span>
                     Statistics
                 </a>
+
+                <a href="#/profile" class="nav-item" id="profileBtn" data-route="profile">
+                    <span>👤</span>
+                    Profile
+                </a>
             </nav>
 
             <!-- Authenticated User Sidebar Badge -->
             <div class="sidebar-user-section">
-                <div class="user-profile-badge">
+                <div class="user-profile-badge" onclick="navigateTo('profile')" title="View and Edit Profile" role="button" tabindex="0">
                     <div id="sidebarUserInitials" class="user-initials">S</div>
                     <div class="user-badge-details">
                         <span id="sidebarUserName" class="user-badge-name">Student</span>
@@ -249,7 +254,7 @@
                 </div>
 
                 <div class="topbar-actions">
-                    <div class="topbar-user-badge">
+                    <div class="topbar-user-badge" onclick="navigateTo('profile')" title="View and Edit Profile" role="button" tabindex="0">
                         <div id="topbarUserInitials" class="user-initials">S</div>
                         <div class="topbar-user-text">
                             <strong id="topbarUserName">Student</strong>
@@ -599,6 +604,183 @@
 
                     <div id="categorySummary"></div>
                 </section>
+
+            </div>
+
+            <!-- ================= VIEW 7: USER PROFILE ================= -->
+            <div class="view-page" id="view-profile" style="display: none;">
+
+                <!-- Profile Header Card -->
+                <section class="profile-header-card">
+                    <div class="profile-header-main">
+                        <div class="profile-avatar-wrapper">
+                            <div class="profile-avatar-preview" id="profileAvatarPreview">
+                                <span id="profileAvatarInitials" class="profile-avatar-text">S</span>
+                                <img id="profileAvatarImg" class="profile-avatar-image" src="" alt="Profile Photo" style="display: none;">
+                            </div>
+                            <div class="profile-avatar-actions" id="avatarActionsContainer">
+                                <label for="profileAvatarInput" class="avatar-upload-btn" id="avatarUploadBtn" title="Upload new photo">
+                                    📷 Upload Photo
+                                    <input type="file" id="profileAvatarInput" accept="image/*" onchange="handleAvatarFileSelect(event)" style="display: none;">
+                                </label>
+                                <button type="button" class="avatar-remove-btn" id="avatarRemoveBtn" onclick="removeAvatarPhoto()" title="Remove photo" style="display: none;">
+                                    ✕ Remove
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="profile-header-info">
+                            <div class="profile-title-row">
+                                <h2 id="profileDisplayName">Student</h2>
+                                <span class="profile-status-badge">Active Student</span>
+                            </div>
+                            <p class="profile-header-email" id="profileDisplayEmail">student@university.edu</p>
+                            <p class="profile-header-sub" id="profileDisplaySub">StudentFlow Productivity Account</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-header-cta">
+                        <button type="button" class="primary-btn" id="profileEditToggleBtn" onclick="toggleProfileEditMode(true)">
+                            ✏️ Edit Profile
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Profile Feedback Banner -->
+                <div id="profileAlert" class="profile-alert" style="display: none;" role="alert"></div>
+
+                <!-- Profile Form -->
+                <form id="profileForm" onsubmit="handleProfileSubmit(event)">
+
+                    <!-- 1. PERSONAL INFORMATION -->
+                    <section class="profile-section">
+                        <div class="section-heading">
+                            <div>
+                                <h2>Personal Information</h2>
+                                <p>Manage your personal profile and contact details.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-grid profile-grid">
+                            <div class="input-group">
+                                <label for="profileNameInput">Full Name <span class="required-star">*</span></label>
+                                <input type="text" id="profileNameInput" placeholder="Enter your full name" required disabled maxlength="100">
+                            </div>
+
+                            <div class="input-group">
+                                <div class="input-label-row">
+                                    <label for="profileEmailInput">Email Address</label>
+                                    <span class="field-hint-badge">🔒 Read-Only</span>
+                                </div>
+                                <input type="email" id="profileEmailInput" placeholder="your.email@university.edu" disabled title="Account email is tied to authentication and cannot be edited">
+                                <small class="field-help-text">Account email is tied to your login and cannot be altered here.</small>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profileGenderInput">Gender</label>
+                                <select id="profileGenderInput" disabled>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Prefer not to say">Prefer not to say</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profileDobInput">Date of Birth</label>
+                                <input type="date" id="profileDobInput" disabled>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profilePhoneInput">Phone Number</label>
+                                <input type="tel" id="profilePhoneInput" placeholder="e.g. +1 555-0199" disabled maxlength="25">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 2. ACADEMIC INFORMATION -->
+                    <section class="profile-section">
+                        <div class="section-heading">
+                            <div>
+                                <h2>Academic Information</h2>
+                                <p>Details about your current education, university, and degree program.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-grid profile-grid">
+                            <div class="input-group">
+                                <label for="profileInstitutionInput">College / University Name</label>
+                                <input type="text" id="profileInstitutionInput" placeholder="e.g. Oxford University" disabled maxlength="150">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profileDegreeInput">Course / Degree</label>
+                                <input type="text" id="profileDegreeInput" placeholder="e.g. Bachelor of Science in Computer Science" disabled maxlength="100">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profileDepartmentInput">Department / Branch</label>
+                                <input type="text" id="profileDepartmentInput" placeholder="e.g. Computer Science & Engineering" disabled maxlength="100">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profileYearInput">Current Year of Study</label>
+                                <select id="profileYearInput" disabled>
+                                    <option value="">Select Year</option>
+                                    <option value="1st Year">1st Year (Freshman)</option>
+                                    <option value="2nd Year">2nd Year (Sophomore)</option>
+                                    <option value="3rd Year">3rd Year (Junior)</option>
+                                    <option value="4th Year">4th Year (Senior)</option>
+                                    <option value="5th Year">5th Year</option>
+                                    <option value="Postgraduate / Master's">Postgraduate / Master's</option>
+                                    <option value="PhD / Doctorate">PhD / Doctorate</option>
+                                    <option value="Graduated">Graduated</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profileSemesterInput">Current Semester</label>
+                                <select id="profileSemesterInput" disabled>
+                                    <option value="">Select Semester</option>
+                                    <option value="Semester 1">Semester 1</option>
+                                    <option value="Semester 2">Semester 2</option>
+                                    <option value="Semester 3">Semester 3</option>
+                                    <option value="Semester 4">Semester 4</option>
+                                    <option value="Semester 5">Semester 5</option>
+                                    <option value="Semester 6">Semester 6</option>
+                                    <option value="Semester 7">Semester 7</option>
+                                    <option value="Semester 8">Semester 8</option>
+                                    <option value="Semester 9+">Semester 9+</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profileStudentIdInput">Student ID / Roll Number</label>
+                                <input type="text" id="profileStudentIdInput" placeholder="e.g. CS-2023-0891" disabled maxlength="50">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="profileGraduationYearInput">Expected Graduation Year</label>
+                                <input type="number" id="profileGraduationYearInput" placeholder="e.g. 2027" min="1990" max="2040" disabled>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Profile Form Actions -->
+                    <div class="profile-form-actions" id="profileFormActions" style="display: none;">
+                        <button type="button" class="secondary-btn" id="profileCancelBtn" onclick="cancelProfileEdit()">
+                            Cancel
+                        </button>
+                        <button type="submit" class="primary-btn" id="profileSaveBtn">
+                            <span>💾 Save Changes</span>
+                        </button>
+                    </div>
+
+                </form>
 
             </div>
 

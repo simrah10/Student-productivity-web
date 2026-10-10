@@ -68,7 +68,7 @@ let currentAuthMode = "login"; // "login" | "signup" | "forgot" | "reset"
 let editingTaskId = null;
 
 // Routing State
-const VALID_ROUTES = ["dashboard", "tasks", "pending", "completed", "overdue", "statistics"];
+const VALID_ROUTES = ["dashboard", "tasks", "pending", "completed", "overdue", "statistics", "profile"];
 const DEFAULT_ROUTE = "dashboard";
 let currentRoute = "dashboard";
 
@@ -489,6 +489,12 @@ function showAuthScreen() {
 }
 
 function showDashboardScreen() {
+    if (!currentUser) {
+        const cached = localStorage.getItem("studentflow_user");
+        if (cached) {
+            try { currentUser = JSON.parse(cached); } catch (_) {}
+        }
+    }
     document.getElementById("authScreen").style.display = "none";
     document.getElementById("mainApp").style.display = "flex";
     updateUserProfileUI();
@@ -539,6 +545,7 @@ function updateUserProfileUI() {
     const name = currentUser.name || "Student";
     const email = currentUser.email || "";
     const initial = (name[0] || "S").toUpperCase();
+    const avatar = currentUser.avatar || "";
 
     // Sidebar Profile
     const sidebarName = document.getElementById("sidebarUserName");
@@ -547,14 +554,29 @@ function updateUserProfileUI() {
 
     if (sidebarName) sidebarName.textContent = name;
     if (sidebarEmail) sidebarEmail.textContent = email;
-    if (sidebarInitials) sidebarInitials.textContent = initial;
+    if (sidebarInitials) {
+        if (avatar) {
+            sidebarInitials.innerHTML = `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}" class="user-avatar-badge-img">`;
+        } else {
+            sidebarInitials.textContent = initial;
+        }
+    }
 
     // Topbar Profile
     const topbarName = document.getElementById("topbarUserName");
     const topbarInitials = document.getElementById("topbarUserInitials");
 
     if (topbarName) topbarName.textContent = name;
-    if (topbarInitials) topbarInitials.textContent = initial;
+    if (topbarInitials) {
+        if (avatar) {
+            topbarInitials.innerHTML = `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}" class="user-avatar-badge-img">`;
+        } else {
+            topbarInitials.textContent = initial;
+        }
+    }
+
+    // Populate profile view fields if elements exist
+    populateProfileFields(currentUser);
 }
 
 // ============================================================
@@ -1061,6 +1083,8 @@ function refreshActiveView(route = currentRoute) {
         renderTaskList("completed", "completedSearchInput", "completedSortSelect", "completedTaskList");
     } else if (route === "overdue") {
         renderTaskList("overdue", "overdueSearchInput", "overdueSortSelect", "overdueTaskList");
+    } else if (route === "profile") {
+        loadUserProfile();
     }
 }
 
@@ -1151,6 +1175,10 @@ function updateTopbarForRoute(route) {
         case "statistics":
             titleEl.textContent = "Statistics";
             subtitleEl.textContent = "View your academic productivity summary.";
+            break;
+        case "profile":
+            titleEl.textContent = "User Profile";
+            subtitleEl.textContent = "View and manage your personal and academic information.";
             break;
         default:
             titleEl.textContent = "Dashboard";
@@ -1319,4 +1347,412 @@ function escapeHtml(text) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// ============================================================
+// USER PROFILE MANAGEMENT
+// ============================================================
+
+let pendingProfileAvatar = null;
+let isProfileEditing = false;
+
+/**
+ * Populate all profile fields from a user object
+ */
+function populateProfileFields(user) {
+    if (!user) {
+        if (!currentUser) {
+            const cached = localStorage.getItem("studentflow_user");
+            if (cached) {
+                try { currentUser = JSON.parse(cached); } catch (_) {}
+            }
+        }
+        user = currentUser;
+    }
+    if (!user) return;
+
+    const name = user.name || "Student";
+    const email = user.email || "";
+    const initial = (name[0] || "S").toUpperCase();
+    const avatar = pendingProfileAvatar !== null ? pendingProfileAvatar : (user.avatar || "");
+
+    // Header Display
+    const nameEl = document.getElementById("profileDisplayName");
+    const emailEl = document.getElementById("profileDisplayEmail");
+    const subEl = document.getElementById("profileDisplaySub");
+    const initialsEl = document.getElementById("profileAvatarInitials");
+    const imgEl = document.getElementById("profileAvatarImg");
+    const removeBtn = document.getElementById("avatarRemoveBtn");
+
+    if (nameEl) nameEl.textContent = name;
+    if (emailEl) emailEl.textContent = email;
+    if (subEl) {
+        if (user.degree && user.institution) {
+            subEl.textContent = `${user.degree} • ${user.institution}`;
+        } else if (user.institution) {
+            subEl.textContent = user.institution;
+        } else if (user.degree) {
+            subEl.textContent = user.degree;
+        } else {
+            subEl.textContent = "StudentFlow Productivity Account";
+        }
+    }
+
+    if (initialsEl && imgEl) {
+        if (avatar) {
+            imgEl.src = avatar;
+            imgEl.style.display = "block";
+            initialsEl.style.display = "none";
+        } else {
+            imgEl.src = "";
+            imgEl.style.display = "none";
+            initialsEl.textContent = initial;
+            initialsEl.style.display = "flex";
+        }
+    }
+
+    if (removeBtn) {
+        removeBtn.style.display = (isProfileEditing && avatar) ? "inline-flex" : "none";
+    }
+
+    // Form inputs (only fill if not currently dirty / typing in edit mode)
+    const nameInput = document.getElementById("profileNameInput");
+    const emailInput = document.getElementById("profileEmailInput");
+    const genderInput = document.getElementById("profileGenderInput");
+    const dobInput = document.getElementById("profileDobInput");
+    const phoneInput = document.getElementById("profilePhoneInput");
+    const instInput = document.getElementById("profileInstitutionInput");
+    const degreeInput = document.getElementById("profileDegreeInput");
+    const deptInput = document.getElementById("profileDepartmentInput");
+    const yearInput = document.getElementById("profileYearInput");
+    const semInput = document.getElementById("profileSemesterInput");
+    const studentIdInput = document.getElementById("profileStudentIdInput");
+    const gradYearInput = document.getElementById("profileGraduationYearInput");
+
+    if (nameInput) nameInput.value = user.name || "";
+    if (emailInput) emailInput.value = user.email || "";
+    if (genderInput) genderInput.value = user.gender || "";
+    if (dobInput) dobInput.value = user.dateOfBirth || "";
+    if (phoneInput) phoneInput.value = user.phone || "";
+    if (instInput) instInput.value = user.institution || "";
+    if (degreeInput) degreeInput.value = user.degree || "";
+    if (deptInput) deptInput.value = user.department || "";
+    if (yearInput) yearInput.value = user.yearOfStudy || "";
+    if (semInput) semInput.value = user.semester || "";
+    if (studentIdInput) studentIdInput.value = user.studentId || "";
+    if (gradYearInput) gradYearInput.value = user.graduationYear || "";
+}
+
+/**
+ * Load fresh user profile from backend GET /api/auth/profile
+ */
+async function loadUserProfile(forceFetch = true) {
+    const token = localStorage.getItem("studentflow_token");
+    if (!token) return;
+
+    // First populate from in-memory currentUser if available
+    if (currentUser) {
+        populateProfileFields(currentUser);
+    }
+
+    if (!forceFetch) return;
+
+    try {
+        let res = await fetch(`${API_BASE_URL}/auth/profile`, {
+            headers: getAuthHeaders()
+        });
+
+        // Fallback to /api/auth/me if backend does not yet have /api/auth/profile
+        if (res.status === 404) {
+            res = await fetch(`${API_BASE_URL}/auth/me`, {
+                headers: getAuthHeaders()
+            });
+        }
+
+        if (res.ok) {
+            const data = await res.json();
+            if (data.user) {
+                currentUser = data.user;
+                localStorage.setItem("studentflow_user", JSON.stringify(currentUser));
+                updateUserProfileUI();
+                populateProfileFields(currentUser);
+            }
+        } else if (res.status === 401) {
+            handleLogout(false);
+        } else {
+            console.warn("Failed to fetch profile from server:", res.status);
+        }
+    } catch (err) {
+        console.warn("Could not reach profile API, using cached data:", err.message);
+    }
+}
+
+/**
+ * Toggle Edit Mode on Profile
+ */
+function toggleProfileEditMode(isEditing) {
+    isProfileEditing = isEditing;
+
+    const editableFieldIds = [
+        "profileNameInput",
+        "profileGenderInput",
+        "profileDobInput",
+        "profilePhoneInput",
+        "profileInstitutionInput",
+        "profileDegreeInput",
+        "profileDepartmentInput",
+        "profileYearInput",
+        "profileSemesterInput",
+        "profileStudentIdInput",
+        "profileGraduationYearInput"
+    ];
+
+    editableFieldIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = !isEditing;
+    });
+
+    // profileEmailInput always remains disabled (read-only for security)
+    const emailInput = document.getElementById("profileEmailInput");
+    if (emailInput) emailInput.disabled = true;
+
+    const editToggleBtn = document.getElementById("profileEditToggleBtn");
+    const actionsContainer = document.getElementById("profileFormActions");
+    const avatarUploadBtn = document.getElementById("avatarUploadBtn");
+    const avatarRemoveBtn = document.getElementById("avatarRemoveBtn");
+
+    if (editToggleBtn) editToggleBtn.style.display = isEditing ? "none" : "inline-flex";
+    if (actionsContainer) actionsContainer.style.display = isEditing ? "flex" : "none";
+
+    const hasAvatar = pendingProfileAvatar !== null ? Boolean(pendingProfileAvatar) : Boolean(currentUser?.avatar);
+    if (avatarRemoveBtn) {
+        avatarRemoveBtn.style.display = isEditing && hasAvatar ? "inline-flex" : "none";
+    }
+    if (avatarUploadBtn) {
+        avatarUploadBtn.style.display = isEditing ? "inline-flex" : "none";
+    }
+
+    if (isEditing) {
+        const nameInput = document.getElementById("profileNameInput");
+        if (nameInput) nameInput.focus();
+    }
+}
+
+/**
+ * Cancel profile editing and restore saved values
+ */
+function cancelProfileEdit() {
+    pendingProfileAvatar = null;
+    hideProfileAlert();
+    if (!currentUser) {
+        const cached = localStorage.getItem("studentflow_user");
+        if (cached) {
+            try { currentUser = JSON.parse(cached); } catch (_) {}
+        }
+    }
+    populateProfileFields(currentUser);
+    toggleProfileEditMode(false);
+}
+
+/**
+ * Handle avatar image file selection with validation and canvas compression
+ */
+function handleAvatarFileSelect(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    // Validate mime type
+    if (!file.type.startsWith("image/")) {
+        showProfileAlert("Please select a valid image file (PNG, JPG, WebP, etc.).", "error");
+        return;
+    }
+
+    // Validate size (max 5MB initial file)
+    if (file.size > 5 * 1024 * 1024) {
+        showProfileAlert("Avatar image is too large. Please select an image under 5MB.", "error");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const rawDataUrl = e.target.result;
+        // Compress and resize image using HTML5 Canvas to max 320x320 for optimal performance
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const maxDim = 320;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > maxDim) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                }
+            } else {
+                if (height > maxDim) {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+            pendingProfileAvatar = compressedDataUrl;
+
+            // Update preview
+            const previewImg = document.getElementById("profileAvatarImg");
+            const initialsEl = document.getElementById("profileAvatarInitials");
+            const removeBtn = document.getElementById("avatarRemoveBtn");
+
+            if (previewImg && initialsEl) {
+                previewImg.src = compressedDataUrl;
+                previewImg.style.display = "block";
+                initialsEl.style.display = "none";
+            }
+            if (removeBtn) removeBtn.style.display = "inline-flex";
+
+            // If not currently in edit mode, switch to edit mode so user can save
+            if (!isProfileEditing) {
+                toggleProfileEditMode(true);
+            }
+            hideProfileAlert();
+        };
+        img.onerror = () => {
+            showProfileAlert("Failed to load image. Please try a different photo.", "error");
+        };
+        img.src = rawDataUrl;
+    };
+    reader.onerror = () => {
+        showProfileAlert("Error reading image file.", "error");
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected if needed
+    event.target.value = "";
+}
+
+/**
+ * Remove avatar photo
+ */
+function removeAvatarPhoto() {
+    pendingProfileAvatar = "";
+
+    const previewImg = document.getElementById("profileAvatarImg");
+    const initialsEl = document.getElementById("profileAvatarInitials");
+    const removeBtn = document.getElementById("avatarRemoveBtn");
+
+    if (previewImg && initialsEl) {
+        previewImg.src = "";
+        previewImg.style.display = "none";
+        const name = (document.getElementById("profileNameInput")?.value || currentUser?.name || "S").trim();
+        initialsEl.textContent = (name[0] || "S").toUpperCase();
+        initialsEl.style.display = "flex";
+    }
+
+    if (removeBtn) removeBtn.style.display = "none";
+
+    if (!isProfileEditing) {
+        toggleProfileEditMode(true);
+    }
+}
+
+/**
+ * Handle Profile Form Submission (Save Changes)
+ */
+async function handleProfileSubmit(event) {
+    event.preventDefault();
+    hideProfileAlert();
+
+    const nameInput = document.getElementById("profileNameInput");
+    const nameVal = nameInput ? nameInput.value.trim() : "";
+
+    if (!nameVal) {
+        showProfileAlert("Full name is required.", "error");
+        if (nameInput) nameInput.focus();
+        return;
+    }
+
+    const saveBtn = document.getElementById("profileSaveBtn");
+    setBtnLoading(saveBtn, true, "Saving...");
+
+    const payload = {
+        name: nameVal,
+        gender: document.getElementById("profileGenderInput")?.value || "",
+        dateOfBirth: document.getElementById("profileDobInput")?.value || "",
+        phone: document.getElementById("profilePhoneInput")?.value.trim() || "",
+        institution: document.getElementById("profileInstitutionInput")?.value.trim() || "",
+        degree: document.getElementById("profileDegreeInput")?.value.trim() || "",
+        department: document.getElementById("profileDepartmentInput")?.value.trim() || "",
+        yearOfStudy: document.getElementById("profileYearInput")?.value || "",
+        semester: document.getElementById("profileSemesterInput")?.value || "",
+        studentId: document.getElementById("profileStudentIdInput")?.value.trim() || "",
+        graduationYear: document.getElementById("profileGraduationYearInput")?.value.trim() || ""
+    };
+
+    if (pendingProfileAvatar !== null) {
+        payload.avatar = pendingProfileAvatar;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/auth/profile`, {
+            method: "PUT",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        let data = null;
+        try {
+            data = await res.json();
+        } catch (_) {
+            data = null;
+        }
+
+        if (res.ok && data && data.success) {
+            currentUser = data.user;
+            localStorage.setItem("studentflow_user", JSON.stringify(currentUser));
+            pendingProfileAvatar = null;
+
+            updateUserProfileUI();
+            populateProfileFields(currentUser);
+            toggleProfileEditMode(false);
+            showProfileAlert("✓ Profile updated successfully! All changes have been saved to your account.", "success");
+        } else {
+            const errorMsg = data?.message ||
+                (res.status === 404
+                    ? "Backend endpoint PUT /api/auth/profile is not available on this server yet."
+                    : `Failed to update profile (Server error ${res.status}). Please try again.`);
+            showProfileAlert(errorMsg, "error");
+        }
+    } catch (err) {
+        console.error("Profile save error:", err);
+        showProfileAlert("Network error: Could not reach the server. Please check your connection.", "error");
+    } finally {
+        setBtnLoading(saveBtn, false, "💾 Save Changes");
+    }
+}
+
+/**
+ * Display alert banner in profile view
+ */
+function showProfileAlert(message, type = "success") {
+    const alertBox = document.getElementById("profileAlert");
+    if (!alertBox) return;
+    alertBox.textContent = message;
+    alertBox.className = `profile-alert ${type}`;
+    alertBox.style.display = "block";
+    alertBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+/**
+ * Hide alert banner in profile view
+ */
+function hideProfileAlert() {
+    const alertBox = document.getElementById("profileAlert");
+    if (!alertBox) return;
+    alertBox.style.display = "none";
+    alertBox.textContent = "";
 }
