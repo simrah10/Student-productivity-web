@@ -1235,19 +1235,8 @@ function clearTaskView(viewName = currentRoute) {
  * Set active navigation item highlight
  */
 function setActiveButton(route) {
-    // Desktop sidebar
     document.querySelectorAll(".nav-item").forEach(btn => {
         const btnRoute = btn.dataset.route || btn.getAttribute("href")?.replace(/^#\/?/, "") || (btn.id === "myTasksBtn" ? "tasks" : btn.id.replace("Btn", ""));
-        if (btnRoute === route) {
-            btn.classList.add("active");
-        } else {
-            btn.classList.remove("active");
-        }
-    });
-
-    // Mobile bottom bar
-    document.querySelectorAll(".mobile-nav-item").forEach(btn => {
-        const btnRoute = btn.dataset.route || btn.getAttribute("href")?.replace(/^#\/?/, "");
         if (btnRoute === route) {
             btn.classList.add("active");
         } else {
@@ -1294,7 +1283,7 @@ function toggleMobileSidebar() {
  * Setup navigation click listeners for sidebar & mobile nav
  */
 function setupNavigationListeners() {
-    document.querySelectorAll(".nav-item, .mobile-nav-item").forEach(item => {
+    document.querySelectorAll(".nav-item").forEach(item => {
         item.addEventListener("click", (e) => {
             const route = item.dataset.route || item.getAttribute("href")?.replace(/^#\/?/, "");
             if (route && VALID_ROUTES.includes(route)) {
