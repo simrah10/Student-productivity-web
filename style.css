@@ -2160,6 +2160,36 @@ input#profileGraduationYearInput:disabled {
     border-radius: 8px;
 }
 
+/* Change Password Buttons */
+#toggleChangePasswordBtn,
+#changePasswordForm .secondary-btn {
+    background-color: #DCE1E8;
+    color: #1f2937;
+    border: 1px solid #cbd2dc;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#toggleChangePasswordBtn:hover,
+#changePasswordForm .secondary-btn:hover {
+    background-color: #ccd4df;
+    border-color: #b8c2d1;
+    color: #0f172a;
+}
+
+[data-theme="dark"] #toggleChangePasswordBtn,
+[data-theme="dark"] #changePasswordForm .secondary-btn {
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] #toggleChangePasswordBtn:hover,
+[data-theme="dark"] #changePasswordForm .secondary-btn:hover {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+}
+
 /* Responsive Media Queries for Profile */
 @media (max-width: 900px) {
     .profile-header-card {
