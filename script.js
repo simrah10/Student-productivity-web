@@ -1,4 +1,4 @@
-/**
+﻿/**
  * StudentFlow - Student Productivity Management System
  * Complete Email/Password Authentication & User-Specific Task Persistence
  */
@@ -2063,4 +2063,173 @@ function hideProfileAlert() {
     if (!alertBox) return;
     alertBox.style.display = "none";
     alertBox.textContent = "";
+}
+
+
+// ============================================================
+// SECURITY & CHANGE PASSWORD FUNCTIONALITY (PROFILE PAGE)
+// ============================================================
+
+/**
+ * Toggle Change Password expandable form
+ */
+function toggleChangePasswordForm(show) {
+    const container = document.getElementById("changePasswordContainer");
+    const toggleBtn = document.getElementById("toggleChangePasswordBtn");
+    if (!container) return;
+
+    const isCurrentlyVisible = container.style.display !== "none";
+    const shouldShow = typeof show === "boolean" ? show : !isCurrentlyVisible;
+
+    if (shouldShow) {
+        container.style.display = "block";
+        if (toggleBtn) toggleBtn.innerHTML = "<span>Close Form</span>";
+        hideChangePasswordAlert();
+        const currentPassInput = document.getElementById("currentPasswordInput");
+        if (currentPassInput) currentPassInput.focus();
+    } else {
+        container.style.display = "none";
+        if (toggleBtn) toggleBtn.innerHTML = "<span>Change Password</span>";
+        const form = document.getElementById("changePasswordForm");
+        if (form) form.reset();
+        hideChangePasswordAlert();
+    }
+}
+
+/**
+ * Display alert banner in change password section
+ */
+function showChangePasswordAlert(message, type = "error") {
+    const alertBox = document.getElementById("changePasswordAlert");
+    if (!alertBox) return;
+    alertBox.textContent = message;
+    alertBox.className = uth-alert ${type};
+    alertBox.style.display = "block";
+    alertBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+/**
+ * Hide alert banner in change password section
+ */
+function hideChangePasswordAlert() {
+    const alertBox = document.getElementById("changePasswordAlert");
+    if (!alertBox) return;
+    alertBox.style.display = "none";
+    alertBox.textContent = "";
+}
+
+/**
+ * Handle Change Password Form Submission
+ */
+async function handleChangePasswordSubmit(event) {
+    event.preventDefault();
+    hideChangePasswordAlert();
+
+    const currentPassInput = document.getElementById("currentPasswordInput");
+    const newPassInput = document.getElementById("newPasswordInput");
+    const confirmPassInput = document.getElementById("confirmNewPasswordInput");
+    const submitBtn = document.getElementById("changePasswordSubmitBtn");
+
+    const currentPassword = currentPassInput ? currentPassInput.value : "";
+    const newPassword = newPassInput ? newPassInput.value : "";
+    const confirmPassword = confirmPassInput ? confirmPassInput.value : "";
+
+    // 1. Validation: Required fields
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showChangePasswordAlert("All fields are required.", "error");
+        return;
+    }
+
+    // 2. Validation: Prevent identical current and new password
+    if (newPassword === currentPassword) {
+        showChangePasswordAlert("New password cannot be identical to your current password.", "error");
+        if (newPassInput) newPassInput.focus();
+        return;
+    }
+
+    // 3. Validation: Confirm password matching
+    if (newPassword !== confirmPassword) {
+        showChangePasswordAlert("New password and confirmation do not match.", "error");
+        if (confirmPassInput) confirmPassInput.focus();
+        return;
+    }
+
+    // 4. Validation: Password policy (8+ chars, uppercase, lowercase, digit, special character)
+    if (newPassword.length < 8) {
+        showChangePasswordAlert("Password must be at least 8 characters long.", "error");
+        if (newPassInput) newPassInput.focus();
+        return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+        showChangePasswordAlert("Password must contain at least one uppercase letter.", "error");
+        if (newPassInput) newPassInput.focus();
+        return;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+        showChangePasswordAlert("Password must contain at least one lowercase letter.", "error");
+        if (newPassInput) newPassInput.focus();
+        return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+        showChangePasswordAlert("Password must contain at least one number.", "error");
+        if (newPassInput) newPassInput.focus();
+        return;
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+        showChangePasswordAlert("Password must contain at least one special character.", "error");
+        if (newPassInput) newPassInput.focus();
+        return;
+    }
+
+    // 5. Submit to backend API
+    setBtnLoading(submitBtn, true, "Updating...");
+
+    try {
+        const res = await fetch(${API_BASE_URL}/auth/change-password, {
+            method: "PUT",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                currentPassword,
+                newPassword,
+                confirmPassword
+            })
+        });
+
+        let data = null;
+        try {
+            data = await res.json();
+        } catch (_) {
+            data = null;
+        }
+
+        if (res.ok && data && data.success) {
+            showChangePasswordAlert(data.message || "Password updated successfully!", "success");
+            // Clear inputs on success
+            if (currentPassInput) currentPassInput.value = "";
+            if (newPassInput) newPassInput.value = "";
+            if (confirmPassInput) confirmPassInput.value = "";
+
+            // Automatically close form after 2.5 seconds while keeping success notice visible
+            setTimeout(() => {
+                const container = document.getElementById("changePasswordContainer");
+                const toggleBtn = document.getElementById("toggleChangePasswordBtn");
+                if (container) container.style.display = "none";
+                if (toggleBtn) toggleBtn.innerHTML = "<span>Change Password</span>";
+            }, 2500);
+        } else {
+            // Keep fields intact on failure so user does not lose input
+            const errorMsg = data?.message ||
+                (res.status === 401
+                    ? "Your session has expired. Please log in again."
+                    : res.status === 404
+                    ? "Password change endpoint is not available on this server."
+                    : Failed to update password (Server error ). Please check your current password and try again.);
+            showChangePasswordAlert(errorMsg, "error");
+        }
+    } catch (err) {
+        console.error("Change password error:", err);
+        showChangePasswordAlert("Network error: Could not reach the server. Please check your connection.", "error");
+    } finally {
+        setBtnLoading(submitBtn, false, "Update Password");
+    }
 }

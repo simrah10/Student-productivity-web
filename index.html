@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -744,6 +744,63 @@
                         <div class="theme-indicator-note">
                             <span id="themeIndicatorNote">Currently using Light Mode</span>
                         </div>
+                    </div>
+                </section>
+
+                <!-- Security & Password Section -->
+                <section class="profile-section" id="profileSecuritySection">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Security & Password</h2>
+                            <p>Keep your account secure by updating your password regularly.</p>
+                        </div>
+                        <button type="button" class="secondary-btn" id="toggleChangePasswordBtn" onclick="toggleChangePasswordForm()">
+                            <span>Change Password</span>
+                        </button>
+                    </div>
+
+                    <!-- Change Password Feedback Banner -->
+                    <div id="changePasswordAlert" class="auth-alert" style="display: none; margin-top: 14px;" role="alert"></div>
+
+                    <!-- Change Password Form Container -->
+                    <div id="changePasswordContainer" style="display: none; margin-top: 18px;">
+                        <form id="changePasswordForm" onsubmit="handleChangePasswordSubmit(event)">
+                            <div class="form-grid profile-grid">
+                                <div class="input-group">
+                                    <label for="currentPasswordInput">Current Password <span class="required-star">*</span></label>
+                                    <div class="password-wrapper">
+                                        <input type="password" id="currentPasswordInput" placeholder="Enter your current password" required autocomplete="current-password">
+                                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPasswordInput', this)" title="Show/Hide Password">👁️</button>
+                                    </div>
+                                </div>
+
+                                <div class="input-group">
+                                    <label for="newPasswordInput">New Password <span class="required-star">*</span></label>
+                                    <div class="password-wrapper">
+                                        <input type="password" id="newPasswordInput" placeholder="Minimum 8 characters" required autocomplete="new-password">
+                                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPasswordInput', this)" title="Show/Hide Password">👁️</button>
+                                    </div>
+                                    <small class="field-help-text">Must be at least 8 characters with uppercase, lowercase, number, and special character.</small>
+                                </div>
+
+                                <div class="input-group">
+                                    <label for="confirmNewPasswordInput">Confirm New Password <span class="required-star">*</span></label>
+                                    <div class="password-wrapper">
+                                        <input type="password" id="confirmNewPasswordInput" placeholder="Re-enter your new password" required autocomplete="new-password">
+                                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmNewPasswordInput', this)" title="Show/Hide Password">👁️</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="profile-form-actions" style="display: flex; gap: 10px; margin-top: 18px;">
+                                <button type="button" class="secondary-btn" onclick="toggleChangePasswordForm(false)">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="primary-btn" id="changePasswordSubmitBtn">
+                                    Update Password
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </section>
 
