@@ -1460,7 +1460,7 @@ nav {
     .topbar-user-badge {
         padding: 4px 10px;
         font-size: 12px;
-        max-width: 150px;
+        max-width: 100%;
         height: 36px;
         min-height: 36px;
         box-sizing: border-box;
@@ -1468,14 +1468,21 @@ nav {
         align-items: center;
         gap: 8px;
         flex: 0 1 auto;
+        min-width: 0;
+    }
+
+    .topbar-user-text {
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
     }
 
     .topbar-user-text strong {
-        max-width: 75px;
+        max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        display: inline-block;
+        display: block;
         vertical-align: middle;
     }
 
