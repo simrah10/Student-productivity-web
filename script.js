@@ -73,6 +73,99 @@ const DEFAULT_ROUTE = "dashboard";
 let currentRoute = "dashboard";
 
 // ============================================================
+// LIGHT / DARK MODE THEME MANAGEMENT
+// ============================================================
+
+const THEME_STORAGE_KEY = "studentflow_theme";
+
+/**
+ * Retrieve current saved theme from localStorage, default to "light"
+ */
+function getStoredTheme() {
+    try {
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        return (stored === "dark" || stored === "light") ? stored : "light";
+    } catch (e) {
+        return "light";
+    }
+}
+
+/**
+ * Apply selected theme across document and update switcher buttons
+ */
+function applyTheme(theme, save = false) {
+    const validTheme = theme === "dark" ? "dark" : "light";
+
+    // Set attributes on html document element and body
+    document.documentElement.setAttribute("data-theme", validTheme);
+    if (document.body) {
+        document.body.setAttribute("data-theme", validTheme);
+    }
+
+    if (save) {
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, validTheme);
+        } catch (e) {
+            console.warn("Could not save theme to localStorage:", e);
+        }
+    }
+
+    syncThemeUI(validTheme);
+
+    // If statistics charts are active, re-render them with appropriate theme colors
+    const statsView = document.getElementById("view-statistics");
+    const isStatsVisible = statsView && statsView.style.display !== "none";
+    if (isStatsVisible && typeof updateStatistics === "function") {
+        updateStatistics();
+    }
+}
+
+/**
+ * Sync UI indicator and buttons on Profile page
+ */
+function syncThemeUI(theme) {
+    const current = theme || getStoredTheme();
+    const lightBtn = document.getElementById("themeLightBtn");
+    const darkBtn = document.getElementById("themeDarkBtn");
+    const indicatorText = document.getElementById("themeIndicatorNote");
+
+    if (lightBtn && darkBtn) {
+        if (current === "dark") {
+            darkBtn.classList.add("active");
+            darkBtn.setAttribute("aria-checked", "true");
+            lightBtn.classList.remove("active");
+            lightBtn.setAttribute("aria-checked", "false");
+        } else {
+            lightBtn.classList.add("active");
+            lightBtn.setAttribute("aria-checked", "true");
+            darkBtn.classList.remove("active");
+            darkBtn.setAttribute("aria-checked", "false");
+        }
+    }
+
+    if (indicatorText) {
+        indicatorText.textContent = current === "dark"
+            ? "Currently using Dark Mode"
+            : "Currently using Light Mode";
+    }
+}
+
+/**
+ * User-triggered theme change from Profile page
+ */
+function setAppTheme(theme) {
+    applyTheme(theme, true);
+}
+
+/**
+ * Initialize theme on page load
+ */
+function initAppTheme() {
+    const theme = getStoredTheme();
+    applyTheme(theme, false);
+}
+
+// ============================================================
 // INITIALIZATION & SESSION RESTORATION
 // ============================================================
 
@@ -99,6 +192,9 @@ function getResetTokenFromUrl() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+    // 0. Initialize visual theme immediately
+    initAppTheme();
+
     // 1. Check for URL parameters (e.g. ?token=xxxx from emailed reset link)
     const resetTokenParam = getResetTokenFromUrl();
 
@@ -798,8 +894,8 @@ function getDueDateText(dueDate) {
  */
 function renderTaskCard(task, today) {
     let priorityText = "Low";
-    if (task.priority === "2") priorityText = "Medium";
-    if (task.priority === "3") priorityText = "High";
+    if (String(task.priority) === "2") priorityText = "Medium";
+    if (String(task.priority) === "3") priorityText = "High";
 
     let statusText = "Pending";
     if (task.completed) {
@@ -851,7 +947,7 @@ function renderTaskList(filter, searchInputId, sortSelectId, containerId) {
 
     const today = new Date().toISOString().split("T")[0];
 
-    let list = tasks.filter(t => t.name.toLowerCase().includes(searchText));
+    let list = tasks.filter(t => (t.name || t.title || "").toLowerCase().includes(searchText));
 
     if (filter === "pending") {
         list = list.filter(t => !t.completed);
@@ -1045,6 +1141,15 @@ function renderStatisticsCharts(total, completed, pending, overdue) {
 
     destroyStatisticsCharts();
 
+    // Theme-Aware Chart Styling
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const doughnutBorderColor = isDark ? "#172338" : "#ffffff";
+    const totalBarBg = isDark ? "#A5B4FC" : "#18202f";
+    const tooltipBg = isDark ? "#111C30" : "#18202f";
+    const yTickColor = isDark ? "#A7B4C8" : "#7a8392";
+    const xTickColor = isDark ? "#F1F5F9" : "#475569";
+    const gridLineColor = isDark ? "#30415B" : "#f1f3f7";
+
     // 1. Doughnut Chart: Task Status Distribution
     const doughnutCanvas = document.getElementById("statusDoughnutChart");
     if (doughnutCanvas) {
@@ -1060,7 +1165,7 @@ function renderStatisticsCharts(total, completed, pending, overdue) {
                         "#3b82f6", // Blue
                         "#ef4444"  // Red
                     ],
-                    borderColor: "#ffffff",
+                    borderColor: doughnutBorderColor,
                     borderWidth: 2,
                     hoverOffset: 6
                 }]
@@ -1073,7 +1178,7 @@ function renderStatisticsCharts(total, completed, pending, overdue) {
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: "#18202f",
+                        backgroundColor: tooltipBg,
                         titleFont: { size: 13, family: "Inter, -apple-system, sans-serif" },
                         bodyFont: { size: 12, family: "Inter, -apple-system, sans-serif" },
                         padding: 10,
@@ -1104,10 +1209,10 @@ function renderStatisticsCharts(total, completed, pending, overdue) {
                     label: "Count",
                     data: [total, completed, pending, overdue],
                     backgroundColor: [
-                        "#18202f", // Brand Navy
-                        "#10b981", // Green
-                        "#3b82f6", // Blue
-                        "#ef4444"  // Red
+                        totalBarBg, // Brand Navy in Light Mode, Accent in Dark Mode
+                        "#10b981",  // Green
+                        "#3b82f6",  // Blue
+                        "#ef4444"   // Red
                     ],
                     borderRadius: 6,
                     borderSkipped: false,
@@ -1122,7 +1227,7 @@ function renderStatisticsCharts(total, completed, pending, overdue) {
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: "#18202f",
+                        backgroundColor: tooltipBg,
                         titleFont: { size: 13, family: "Inter, -apple-system, sans-serif" },
                         bodyFont: { size: 12, family: "Inter, -apple-system, sans-serif" },
                         padding: 10,
@@ -1140,16 +1245,16 @@ function renderStatisticsCharts(total, completed, pending, overdue) {
                         ticks: {
                             stepSize: 1,
                             precision: 0,
-                            color: "#7a8392",
+                            color: yTickColor,
                             font: { size: 11, family: "Inter, -apple-system, sans-serif" }
                         },
                         grid: {
-                            color: "#f1f3f7"
+                            color: gridLineColor
                         }
                     },
                     x: {
                         ticks: {
-                            color: "#475569",
+                            color: xTickColor,
                             font: { size: 12, family: "Inter, -apple-system, sans-serif", weight: 500 }
                         },
                         grid: {
@@ -1647,6 +1752,9 @@ function populateProfileFields(user) {
  * Load fresh user profile from backend GET /api/auth/profile
  */
 async function loadUserProfile(forceFetch = true) {
+    // Sync theme buttons and indicators on Profile view
+    syncThemeUI(getStoredTheme());
+
     const token = localStorage.getItem("studentflow_token");
     if (!token) return;
 

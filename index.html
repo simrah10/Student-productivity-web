@@ -7,6 +7,19 @@
     <!-- Configured Backend API Base URL for StudentFlow -->
     <meta name="api-base-url" content="https://student-backend-wdxq.onrender.com/api">
     <title>Student Productivity Management System</title>
+    <!-- Early theme initialization to prevent flash of wrong theme -->
+    <script>
+        (function() {
+            try {
+                var savedTheme = localStorage.getItem('studentflow_theme');
+                if (savedTheme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -695,6 +708,44 @@
 
                 <!-- Profile Feedback Banner -->
                 <div id="profileAlert" class="profile-alert" style="display: none;" role="alert"></div>
+
+                <!-- Theme & Appearance Preference Section -->
+                <section class="profile-section" id="profileThemeSection">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Theme & Appearance</h2>
+                            <p>Choose between Light Mode and Dark Mode for your interface.</p>
+                        </div>
+                    </div>
+
+                    <div class="theme-switcher-wrapper">
+                        <div class="theme-segmented-control" role="radiogroup" aria-label="Theme Selection">
+                            <button type="button" 
+                                    class="theme-choice-btn active" 
+                                    id="themeLightBtn" 
+                                    onclick="setAppTheme('light')" 
+                                    role="radio" 
+                                    aria-checked="true"
+                                    title="Switch to Light Mode">
+                                <span class="theme-choice-icon">☀️</span>
+                                <span class="theme-choice-text">Light Mode</span>
+                            </button>
+                            <button type="button" 
+                                    class="theme-choice-btn" 
+                                    id="themeDarkBtn" 
+                                    onclick="setAppTheme('dark')" 
+                                    role="radio" 
+                                    aria-checked="false"
+                                    title="Switch to Dark Mode">
+                                <span class="theme-choice-icon">🌙</span>
+                                <span class="theme-choice-text">Dark Mode</span>
+                            </button>
+                        </div>
+                        <div class="theme-indicator-note">
+                            <span id="themeIndicatorNote">Currently using Light Mode</span>
+                        </div>
+                    </div>
+                </section>
 
                 <!-- Profile Form -->
                 <form id="profileForm" onsubmit="handleProfileSubmit(event)">
