@@ -1280,6 +1280,7 @@ nav {
 
 /* Tablet & Smaller Screens (<= 900px) */
 @media (max-width: 900px) {
+
     /* Mobile Menu Toggle & Close */
     .mobile-menu-btn {
         display: flex;
@@ -1399,6 +1400,7 @@ nav {
 
 /* Mobile Screens (<= 650px) */
 @media (max-width: 650px) {
+
     /* Prevent iOS Safari viewport zoom on form focus */
     input[type="text"],
     input[type="email"],
@@ -1429,7 +1431,7 @@ nav {
         width: 100%;
     }
 
-    .topbar-title-group > div {
+    .topbar-title-group>div {
         min-width: 0;
         flex: 1 1 auto;
     }
@@ -1712,7 +1714,7 @@ nav {
         cursor: pointer;
     }
 
-    .tasks-header > .clear-view-btn {
+    .tasks-header>.clear-view-btn {
         align-self: flex-start;
         height: 40px;
         min-height: 40px;
@@ -1829,6 +1831,7 @@ nav {
 
 /* Ultra-Small Phones (<= 350px, e.g. iPhone SE 1st gen) */
 @media (max-width: 350px) {
+
     .dashboard,
     .statistics-grid {
         grid-template-columns: 1fr;
@@ -1872,6 +1875,7 @@ nav {
         opacity: 0;
         transform: translateY(4px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2160,8 +2164,44 @@ input#profileGraduationYearInput:disabled {
     border-radius: 8px;
 }
 
-/* Change Password Buttons */
-#toggleChangePasswordBtn,
+/* Change Password Buttons & Security Section Spacing */
+#profileSecuritySection .section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+#profileSecuritySection .section-heading > div p {
+    margin-bottom: 0;
+}
+
+#profileSecuritySection #toggleChangePasswordBtn {
+    flex-shrink: 0;
+}
+
+#changePasswordContainer {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border-color);
+}
+
+#changePasswordContainer .profile-grid {
+    margin-top: 0;
+}
+
+#toggleChangePasswordBtn {
+    background-color: #18202f;
+    color: #ffffff;
+    border: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#toggleChangePasswordBtn:hover {
+    opacity: 0.9;
+}
+
 #changePasswordForm .secondary-btn {
     background-color: #F8FAFC;
     color: #1f2937;
@@ -2170,21 +2210,30 @@ input#profileGraduationYearInput:disabled {
     transition: all 0.2s ease;
 }
 
-#toggleChangePasswordBtn:hover,
 #changePasswordForm .secondary-btn:hover {
     background-color: #EDF2F7;
     border-color: #CBD5E1;
     color: #0f172a;
 }
 
-[data-theme="dark"] #toggleChangePasswordBtn,
+[data-theme="dark"] #toggleChangePasswordBtn {
+    background-color: var(--primary-accent);
+    color: #0B1120;
+    font-weight: 700;
+    border: none;
+}
+
+[data-theme="dark"] #toggleChangePasswordBtn:hover {
+    background-color: var(--accent-hover);
+    color: #0B1120;
+}
+
 [data-theme="dark"] #changePasswordForm .secondary-btn {
     background-color: var(--bg-elevated);
     color: var(--text-primary);
     border-color: var(--border-color);
 }
 
-[data-theme="dark"] #toggleChangePasswordBtn:hover,
 [data-theme="dark"] #changePasswordForm .secondary-btn:hover {
     background-color: var(--border-color);
     color: var(--text-primary);
@@ -2211,6 +2260,12 @@ input#profileGraduationYearInput:disabled {
 }
 
 @media (max-width: 650px) {
+    #profileSecuritySection .section-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
     .profile-grid {
         grid-template-columns: 1fr;
         gap: 14px;
@@ -2867,4 +2922,3 @@ input#profileGraduationYearInput:disabled {
 [data-theme="dark"] .toggle-password {
     color: var(--text-secondary);
 }
-
