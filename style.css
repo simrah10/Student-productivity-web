@@ -2163,17 +2163,17 @@ input#profileGraduationYearInput:disabled {
 /* Change Password Buttons */
 #toggleChangePasswordBtn,
 #changePasswordForm .secondary-btn {
-    background-color: #DCE1E8;
+    background-color: #F8FAFC;
     color: #1f2937;
-    border: 1px solid #cbd2dc;
+    border: 1px solid #E2E8F0;
     font-weight: 500;
     transition: all 0.2s ease;
 }
 
 #toggleChangePasswordBtn:hover,
 #changePasswordForm .secondary-btn:hover {
-    background-color: #ccd4df;
-    border-color: #b8c2d1;
+    background-color: #EDF2F7;
+    border-color: #CBD5E1;
     color: #0f172a;
 }
 
